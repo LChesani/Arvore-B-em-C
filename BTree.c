@@ -91,67 +91,67 @@ int busca_pos_chave(ArvB *arv, int id)
 
 
 
-ArvB *ArvB_insere_rec(ArvB* b, Indice *chave, int *median)
+ArvB *ArvB_insere_rec(ArvB* arv, Indice *chave, int *median)
 {
     int pos;
     int mid;
-    ArvB *b2;
+    ArvB *arv2;
 
-    pos = busca_pos_chave(b, chave->id);
+    pos = busca_pos_chave(arv, chave->id);
 
-    if (pos < b->n_chaves && b->chaves[pos].id == chave->id)
+    if (pos < arv->n_chaves && arv->chaves[pos].id == chave->id)
     {
         return 0;
     }
 
-    if (b->folha){
+    if (arv->folha){
 
-        memmove(&b->chaves[pos + 1], &b->chaves[pos], sizeof(*(b->chaves)) * (b->n_chaves - pos));
-        b->chaves[pos] = *chave;
-        b->n_chaves++;
+        memmove(&arv->chaves[pos + 1], &arv->chaves[pos], sizeof(*(arv->chaves)) * (arv->n_chaves - pos));
+        arv->chaves[pos] = *chave;
+        arv->n_chaves++;
     }
     else
     {
 
-        b2 = ArvB_insere_rec(b->filhos[pos], chave, &mid);
+        arv2 = ArvB_insere_rec(arv->filhos[pos], chave, &mid);
 
-        if (b2)
+        if (arv2)
         {
 
-            memmove(&b->chaves[pos + 1], &b->chaves[pos], sizeof(*(b->chaves)) * (b->n_chaves - pos));
+            memmove(&arv->chaves[pos + 1], &arv->chaves[pos], sizeof(*(arv->chaves)) * (arv->n_chaves - pos));
         
-            memmove(&b->filhos[pos + 2], &b->filhos[pos + 1], sizeof(*(b->chaves)) * (b->n_chaves - pos));
+            memmove(&arv->filhos[pos + 2], &arv->filhos[pos + 1], sizeof(*(arv->chaves)) * (arv->n_chaves - pos));
             
             
             Indice *ind = (Indice*) malloc(sizeof(Indice));
             ind->id = mid;
             ind->pos_seek = 1;
-            b->chaves[pos] = *ind;
-            b->filhos[pos + 1] = b2;
-            b->n_chaves++;
+            arv->chaves[pos] = *ind;
+            arv->filhos[pos + 1] = arv2;
+            arv->n_chaves++;
         }
     }
 
-    if (b->n_chaves >= M-1)
+    if (arv->n_chaves >= M-1)
     {
-        mid = b->n_chaves / 2;
+        mid = arv->n_chaves / 2;
 
-        *median = b->chaves[mid].id;
+        *median = arv->chaves[mid].id;
 
-        b2 = malloc(sizeof(*b2));
+        arv2 = malloc(sizeof(*arv2));
 
-        b2->n_chaves = b->n_chaves - mid - 1;
-        b2->folha = b->folha;
+        arv2->n_chaves = arv->n_chaves - mid - 1;
+        arv2->folha = arv->folha;
 
-        memmove(b2->chaves, &b->chaves[mid + 1], sizeof(*(b->chaves)) * b2->n_chaves);
-        if (!b->folha)
+        memmove(arv2->chaves, &arv->chaves[mid + 1], sizeof(*(arv->chaves)) * arv2->n_chaves);
+        if (!arv->folha)
         {
-            memmove(b2->filhos, &b->filhos[mid + 1], sizeof(*(b->filhos)) * (b2->n_chaves + 1));
+            memmove(arv2->filhos, &arv->filhos[mid + 1], sizeof(*(arv->filhos)) * (arv2->n_chaves + 1));
         }
 
-        b->n_chaves = mid;
+        arv->n_chaves = mid;
 
-        return b2;
+        return arv2;
     }
     else
     {
@@ -160,30 +160,30 @@ ArvB *ArvB_insere_rec(ArvB* b, Indice *chave, int *median)
 }
 
 
-void ArvB_insere(ArvB *b, Indice *chave)
+void ArvB_insere(ArvB *arv, Indice *chave)
   {
-      ArvB *b1;   /* new left child */
-      ArvB *b2;   /* new right child */
+      ArvB *arv1;   /* new left child */
+      ArvB *arv2;   /* new right child */
       int median;
   
-      b2 = ArvB_insere_rec(b, chave, &median);
+      arv2 = ArvB_insere_rec(arv, chave, &median);
   
-      if(b2) {
+      if(arv2) {
           /* basic issue here is that we are at the root */
           /* so if we split, we have to make a new root */
   
-          b1 = malloc(sizeof(*b1));
-          assert(b1);
+          arv1 = malloc(sizeof(*arv1));
+          assert(arv1);
   
           /* copy root to b1 */
-          memmove(b1, b, sizeof(*b));
+          memmove(arv1, arv, sizeof(*arv));
   
           /* make root point to b1 and b2 */
-          b->n_chaves = 1;
-          b->folha = 0;
-          b->chaves[0].id = median;
-          b->filhos[0] = b1;
-          b->filhos[1] = b2;
+          arv->n_chaves = 1;
+          arv->folha = 0;
+          arv->chaves[0].id = median;
+          arv->filhos[0] = arv1;
+          arv->filhos[1] = arv2;
       }
   }
 
