@@ -32,7 +32,7 @@ int main(void){
     ArvB_insere(arv, idx8);
     ArvB_printa(arv);
 
-    Indice *idx = indice_cria(14, 22);
+    Indice *idx = indice_cria(3, 22);
 
     if(Arv_busca(arv,idx))
         printf("Existe");

@@ -5,6 +5,7 @@
 #include "BTree.h"
 
 #define M 4
+#define OK 0
 
 struct indice
 {
@@ -68,6 +69,7 @@ void ArvB_printa(ArvB *arv)
     {
         return;
     }
+    printf("folha: %d ", arv->folha);
     for (int i = 0; i < arv->n_chaves; i++)
     {
         printf("%d ", arv->chaves[i].id);
@@ -99,17 +101,18 @@ void desloca_chaves(ArvB *arv, int pos)
     }
 }
 
-ArvB *ArvB_insere_rec(ArvB *arv, Indice *chave, int *median)
+ArvB *ArvB_insere_rec(ArvB *arv, Indice *chave, int *idMeio)
 {
     int pos;
-    int mid;
-    ArvB *arv2;
+    int idMeioAux;
+    int filhoNchaves;
+    ArvB *noFilho;
 
     pos = busca_pos_chave(arv, chave->id);
 
     if (pos < arv->n_chaves && arv->chaves[pos].id == chave->id)
     {
-        return 0;
+        return OK;
     }
 
     if (arv->folha)
@@ -121,72 +124,70 @@ ArvB *ArvB_insere_rec(ArvB *arv, Indice *chave, int *median)
     else
     {
 
-        arv2 = ArvB_insere_rec(arv->filhos[pos], chave, &mid);
+        noFilho = ArvB_insere_rec(arv->filhos[pos], chave, &idMeioAux);
 
-        if (arv2)
+        if (noFilho != OK)
         {
 
             desloca_chaves(arv,pos);
 
             memmove(&arv->filhos[pos + 2], &arv->filhos[pos + 1], sizeof(*(arv->chaves)) * (arv->n_chaves - pos));
 
-            Indice *ind = (Indice *)malloc(sizeof(Indice));
-            ind->id = mid;
-            ind->pos_seek = 1;
-            arv->chaves[pos] = *ind;
-            arv->filhos[pos + 1] = arv2;
+            arv->chaves[pos].id = idMeioAux;
+            arv->chaves[pos].pos_seek = 1;
+            arv->filhos[pos + 1] = noFilho;
             arv->n_chaves++;
         }
     }
 
     if (arv->n_chaves >= M - 1)
     {
-        mid = arv->n_chaves / 2;
+        filhoNchaves = arv->n_chaves / 2;
 
-        *median = arv->chaves[mid].id;
+        *idMeio = arv->chaves[filhoNchaves].id;
 
-        arv2 = malloc(sizeof(*arv2));
+        noFilho = (ArvB*) malloc(sizeof(ArvB));
 
-        arv2->n_chaves = arv->n_chaves - mid - 1;
-        arv2->folha = arv->folha;
+        noFilho->n_chaves = arv->n_chaves - filhoNchaves - 1;
+        noFilho->folha = arv->folha;
 
-        memmove(arv2->chaves, &arv->chaves[mid + 1], sizeof(*(arv->chaves)) * arv2->n_chaves);
+        memmove(noFilho->chaves, &arv->chaves[filhoNchaves + 1], sizeof(*(arv->chaves)) * noFilho->n_chaves);
         if (!arv->folha)
         {
-            memmove(arv2->filhos, &arv->filhos[mid + 1], sizeof(*(arv->filhos)) * (arv2->n_chaves + 1));
+            memmove(noFilho->filhos, &arv->filhos[filhoNchaves + 1], sizeof(*(arv->filhos)) * (noFilho->n_chaves + 1));
         }
 
-        arv->n_chaves = mid;
+        arv->n_chaves = filhoNchaves;
 
-        return arv2;
+        return noFilho;
     }
     else
     {
-        return 0;
+        return OK;
     }
 }
 
 void ArvB_insere(ArvB *arv, Indice *chave)
 {
-    ArvB *arv1; /* new left child */
-    ArvB *arv2; /* new right child */
-    int median;
+    ArvB *noArvEsq;
+    ArvB *noArvDir;
+    int idMeio;
 
-    arv2 = ArvB_insere_rec(arv, chave, &median);
+    noArvDir = ArvB_insere_rec(arv, chave, &idMeio);
 
-    if (arv2)
+    if (noArvDir != OK)
     {
 
-        arv1 = malloc(sizeof(*arv1));
-        assert(arv1);
+        noArvEsq = (ArvB*) malloc(sizeof(ArvB));
+        assert(noArvEsq);
 
-        memmove(arv1, arv, sizeof(*arv));
+        memmove(noArvEsq, arv, sizeof(*arv));
 
         arv->n_chaves = 1;
         arv->folha = 0;
-        arv->chaves[0].id = median;
-        arv->filhos[0] = arv1;
-        arv->filhos[1] = arv2;
+        arv->chaves[0].id = idMeio;
+        arv->filhos[0] = noArvEsq;
+        arv->filhos[1] = noArvDir;
     }
 }
 
