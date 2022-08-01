@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #include "BTree.h"
 
 #define M 4
@@ -26,20 +28,19 @@ struct arvb
     int folha; // e folha ou nao e
 };
 
+
+Indice *indice_cria(int id, int pos_seek){
+    Indice *idx = (Indice*) malloc(sizeof(Indice));
+    idx->id = id;
+    idx->pos_seek = pos_seek;
+    return idx;
+}
+
 ArvB *ArvB_cria(void)
 {
     ArvB *arv = (ArvB *)malloc(sizeof(ArvB));
     arv->n_chaves = 0;
-    arv->folha = 1;
-    for (int i = 0; i < M - 1; i++)
-    {
-        arv->chaves[i].pos_seek = -1;
-        arv->chaves[i].id = -1;
-    }
-    for (int i = 0; i < M; i++)
-    {
-        arv->filhos[i] = NULL;
-    }
+    arv->folha = 1; 
     return arv;
 }
 
@@ -77,41 +78,150 @@ void ArvB_printa(ArvB *arv)
         ArvB_printa(arv->filhos[i]);
     }
 }
+int busca_chave(int n, Indice *a, int id)
+{
+    int lo;
+    int hi;
+    int mid;
 
-int chave(ArvB *arv, Indice *idx){
-    for(int i = 0; i < arv->n_chaves; i++){
-        if(arv->chaves[i].id < idx->id){
-            return i;
+    /* invariant: a[lo] < chave <= a[hi] */
+    lo = -1;
+    hi = n;
+
+    while (lo + 1 < hi)
+    {
+        mid = (lo + hi) / 2;
+        if (a[mid].id == id)
+        {
+            return mid;
+        }
+        else if (a[mid].id < id)
+        {
+            lo = mid;
+        }
+        else
+        {
+            hi = mid;
         }
     }
-    return -1;
-}
 
-void ordena(ArvB *arv, Indice *idx, int pos){
-    for(int i = arv->n_chaves; i > pos+1; i--){
-        arv->chaves[i+1] = arv->chaves[i];
-    }
+    return hi;
 }
 
 
-void ArvB_insere_rec(ArvB *arv, Indice *idx){
-    if(arv == NULL)
-        return;
-    int pos = chave(arv, idx); //acha o ultimo elemento menor
-    if(arv->n_chaves < M-1 && arv->folha == 1 && pos != -1){
-        insere_ordenado(arv, idx, pos);
-        arv->n_chaves++;
-    }
-}
 
-
-void ArvB_insere(ArvB *arv, Indice *idx)
+ArvB *ArvB_insere_rec(ArvB* b, Indice *chave, int *median)
 {
-    if(Arv_busca(arv, idx) != NULL){
-        return;
+    int pos;
+    int mid;
+    ArvB *b2;
+
+    pos = busca_chave(b->n_chaves, b->chaves, chave->id);
+
+    if (pos < b->n_chaves && b->chaves[pos].id == chave->id)
+    {
+        return 0;
     }
-    ArvB_insere_rec(arv, idx);
+
+    if (b->folha){
+
+        memmove(&b->chaves[pos + 1], &b->chaves[pos], sizeof(*(b->chaves)) * (b->n_chaves - pos));
+        b->chaves[pos] = *chave;
+        b->n_chaves++;
+    }
+    else
+    {
+
+        b2 = ArvB_insere_rec(b->filhos[pos], chave, &mid);
+
+        if (b2)
+        {
+
+            memmove(&b->chaves[pos + 1], &b->chaves[pos], sizeof(*(b->chaves)) * (b->n_chaves - pos));
+
+            memmove(&b->filhos[pos + 2], &b->filhos[pos + 1], sizeof(*(b->chaves)) * (b->n_chaves - pos));
+            
+            
+            Indice *ind = (Indice*) malloc(sizeof(Indice));
+            ind->id = mid;
+            ind->pos_seek = 1;
+            b->chaves[pos] = *ind;
+            b->filhos[pos + 1] = b2;
+            b->n_chaves++;
+        }
+    }
+
+    if (b->n_chaves >= M-1)
+    {
+        mid = b->n_chaves / 2;
+
+        *median = b->chaves[mid].id;
+
+        b2 = malloc(sizeof(*b2));
+
+        b2->n_chaves = b->n_chaves - mid - 1;
+        b2->folha = b->folha;
+
+        memmove(b2->chaves, &b->chaves[mid + 1], sizeof(*(b->chaves)) * b2->n_chaves);
+        if (!b->folha)
+        {
+            memmove(b2->filhos, &b->filhos[mid + 1], sizeof(*(b->filhos)) * (b2->n_chaves + 1));
+        }
+
+        b->n_chaves = mid;
+
+        return b2;
+    }
+    else
+    {
+        return 0;
+    }
 }
+
+
+void ArvB_insere(ArvB *b, Indice *chave)
+  {
+      ArvB *b1;   /* new left child */
+      ArvB *b2;   /* new right child */
+      int median;
+  
+      b2 = ArvB_insere_rec(b, chave, &median);
+  
+      if(b2) {
+          /* basic issue here is that we are at the root */
+          /* so if we split, we have to make a new root */
+  
+          b1 = malloc(sizeof(*b1));
+          assert(b1);
+  
+          /* copy root to b1 */
+          memmove(b1, b, sizeof(*b));
+  
+          /* make root point to b1 and b2 */
+          b->n_chaves = 1;
+          b->folha = 0;
+          b->chaves[0].id = median;
+          b->filhos[0] = b1;
+          b->filhos[1] = b2;
+      }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
