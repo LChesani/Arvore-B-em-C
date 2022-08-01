@@ -28,9 +28,9 @@ struct arvb
     int folha; // e folha ou nao e
 };
 
-
-Indice *indice_cria(int id, int pos_seek){
-    Indice *idx = (Indice*) malloc(sizeof(Indice));
+Indice *indice_cria(int id, int pos_seek)
+{
+    Indice *idx = (Indice *)malloc(sizeof(Indice));
     idx->id = id;
     idx->pos_seek = pos_seek;
     return idx;
@@ -40,10 +40,9 @@ ArvB *ArvB_cria(void)
 {
     ArvB *arv = (ArvB *)malloc(sizeof(ArvB));
     arv->n_chaves = 0;
-    arv->folha = 1; 
+    arv->folha = 1;
     return arv;
 }
-
 
 Indice *Arv_busca(ArvB *arv, Indice *idx)
 {
@@ -74,28 +73,33 @@ void ArvB_printa(ArvB *arv)
         printf("%d ", arv->chaves[i].id);
     }
     printf("\n");
-    for (int i = 0; i < arv->n_chaves+1; i++)
+    for (int i = 0; i < arv->n_chaves + 1; i++)
     {
         ArvB_printa(arv->filhos[i]);
     }
 }
+
 int busca_pos_chave(ArvB *arv, int id)
 {
-    for(int i = 0; i < arv->n_chaves; i++){
-        if(arv->chaves[i].id > id){
-           return i;
+    for (int i = 0; i < arv->n_chaves; i++)
+    {
+        if (arv->chaves[i].id > id)
+        {
+            return i;
         }
     }
     return arv->n_chaves;
 }
 
-void desloca_chaves(ArvB *arv, int pos){
-    for(int i = arv->n_chaves; i > pos; i--){
-        arv->chaves[pos] = arv->chaves[pos-1];
+void desloca_chaves(ArvB *arv, int pos)
+{
+    for (int i = arv->n_chaves; i > pos; i--)
+    {
+        arv->chaves[i] = arv->chaves[i - 1];
     }
 }
 
-ArvB *ArvB_insere_rec(ArvB* arv, Indice *chave, int *median)
+ArvB *ArvB_insere_rec(ArvB *arv, Indice *chave, int *median)
 {
     int pos;
     int mid;
@@ -108,8 +112,9 @@ ArvB *ArvB_insere_rec(ArvB* arv, Indice *chave, int *median)
         return 0;
     }
 
-    if (arv->folha){
-        memmove(&arv->chaves[pos + 1], &arv->chaves[pos], sizeof(*(arv->chaves)) * (arv->n_chaves - pos));
+    if (arv->folha)
+    {
+        desloca_chaves(arv, pos);
         arv->chaves[pos] = *chave;
         arv->n_chaves++;
     }
@@ -121,12 +126,11 @@ ArvB *ArvB_insere_rec(ArvB* arv, Indice *chave, int *median)
         if (arv2)
         {
 
-            memmove(&arv->chaves[pos + 1], &arv->chaves[pos], sizeof(*(arv->chaves)) * (arv->n_chaves - pos));
-        
+            desloca_chaves(arv,pos);
+
             memmove(&arv->filhos[pos + 2], &arv->filhos[pos + 1], sizeof(*(arv->chaves)) * (arv->n_chaves - pos));
-            
-            
-            Indice *ind = (Indice*) malloc(sizeof(Indice));
+
+            Indice *ind = (Indice *)malloc(sizeof(Indice));
             ind->id = mid;
             ind->pos_seek = 1;
             arv->chaves[pos] = *ind;
@@ -135,7 +139,7 @@ ArvB *ArvB_insere_rec(ArvB* arv, Indice *chave, int *median)
         }
     }
 
-    if (arv->n_chaves >= M-1)
+    if (arv->n_chaves >= M - 1)
     {
         mid = arv->n_chaves / 2;
 
@@ -162,52 +166,29 @@ ArvB *ArvB_insere_rec(ArvB* arv, Indice *chave, int *median)
     }
 }
 
-
 void ArvB_insere(ArvB *arv, Indice *chave)
-  {
-      ArvB *arv1;   /* new left child */
-      ArvB *arv2;   /* new right child */
-      int median;
-  
-      arv2 = ArvB_insere_rec(arv, chave, &median);
-  
-      if(arv2) {
-          /* basic issue here is that we are at the root */
-          /* so if we split, we have to make a new root */
-  
-          arv1 = malloc(sizeof(*arv1));
-          assert(arv1);
-  
-          /* copy root to b1 */
-          memmove(arv1, arv, sizeof(*arv));
-  
-          /* make root point to b1 and b2 */
-          arv->n_chaves = 1;
-          arv->folha = 0;
-          arv->chaves[0].id = median;
-          arv->filhos[0] = arv1;
-          arv->filhos[1] = arv2;
-      }
-  }
+{
+    ArvB *arv1; /* new left child */
+    ArvB *arv2; /* new right child */
+    int median;
 
+    arv2 = ArvB_insere_rec(arv, chave, &median);
 
+    if (arv2)
+    {
 
+        arv1 = malloc(sizeof(*arv1));
+        assert(arv1);
 
+        memmove(arv1, arv, sizeof(*arv));
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        arv->n_chaves = 1;
+        arv->folha = 0;
+        arv->chaves[0].id = median;
+        arv->filhos[0] = arv1;
+        arv->filhos[1] = arv2;
+    }
+}
 
 void ArvB_limpa(ArvB *arv)
 {
