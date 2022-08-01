@@ -89,7 +89,11 @@ int busca_pos_chave(ArvB *arv, int id)
     return arv->n_chaves;
 }
 
-
+void desloca_chaves(ArvB *arv, int pos){
+    for(int i = arv->n_chaves; i > pos; i--){
+        arv->chaves[pos] = arv->chaves[pos-1];
+    }
+}
 
 ArvB *ArvB_insere_rec(ArvB* arv, Indice *chave, int *median)
 {
@@ -105,7 +109,6 @@ ArvB *ArvB_insere_rec(ArvB* arv, Indice *chave, int *median)
     }
 
     if (arv->folha){
-
         memmove(&arv->chaves[pos + 1], &arv->chaves[pos], sizeof(*(arv->chaves)) * (arv->n_chaves - pos));
         arv->chaves[pos] = *chave;
         arv->n_chaves++;
