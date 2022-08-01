@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <assert.h>
 #include "BTree.h"
 
 #define M 4
@@ -29,16 +27,16 @@ Indice *indice_cria(int id, int pos_seek)
     return idx;
 }
 
-int getPos(Indice *idx){
-    return idx->pos_seek;
-}
-
 ArvB *ArvB_cria(void)
 {
     ArvB *arv = (ArvB *)malloc(sizeof(ArvB));
     arv->n_chaves = 0;
     arv->folha = 1;
     return arv;
+}
+
+int getPos(Indice *idx){
+    return idx->pos_seek;
 }
 
 Indice *Arv_busca(ArvB *arv, Indice *idx)
@@ -59,24 +57,6 @@ Indice *Arv_busca(ArvB *arv, Indice *idx)
     return Arv_busca(arv->filhos[i], idx);
 }
 
-void ArvB_printa(ArvB *arv)
-{
-    if (arv == NULL)
-    {
-        return;
-    }
-    printf("folha: %d ", arv->folha);
-    for (int i = 0; i < arv->n_chaves; i++)
-    {
-        printf("%d ", arv->chaves[i].id);
-    }
-    printf("\n");
-    for (int i = 0; i < arv->n_chaves + 1; i++)
-    {
-        ArvB_printa(arv->filhos[i]);
-    }
-}
-
 int busca_pos_chave(ArvB *arv, int id)
 {
     for (int i = 0; i < arv->n_chaves; i++)
@@ -95,6 +75,48 @@ void desloca_chaves(ArvB *arv, int pos)
     {
         arv->chaves[i] = arv->chaves[i - 1];
     }
+}
+
+void desloca_filhos(ArvB *arv, int pos)
+{
+    for (int i = arv->n_chaves + 1; i > pos + 1; i--)
+    {
+        arv->filhos[i] = arv->filhos[i - 1];
+    }
+}
+
+void coloca_chaves_no_filho(ArvB *arv, ArvB *noFilho, int pos)
+{
+    for (int i = pos; i < arv->n_chaves; i++)
+    {
+        noFilho->chaves[i - pos] = arv->chaves[i];
+    }
+}
+
+void coloca_filhos_no_filho(ArvB *arv, ArvB *noFilho, int pos)
+{
+    for (int i = pos; i < arv->n_chaves + 1; i++)
+    {
+        noFilho->filhos[i - pos] = arv->filhos[i];
+        arv->filhos[i] = NULL;
+    }
+}
+
+void nova_raiz(ArvB *raiz, ArvB *noArvEsq, ArvB *noArvDir, int idMeio)
+{
+    noArvEsq = (ArvB *)malloc(sizeof(ArvB));
+
+    coloca_chaves_no_filho(raiz, noArvEsq, 0);
+    for (int i = 0; i < raiz->n_chaves + 1; i++)
+        noArvEsq->filhos[i] = raiz->filhos[i];
+    noArvEsq->folha = raiz->folha;
+    noArvEsq->n_chaves = raiz->n_chaves;
+
+    raiz->n_chaves = 1;
+    raiz->folha = 0;
+    raiz->chaves[0].id = idMeio;
+    raiz->filhos[0] = noArvEsq;
+    raiz->filhos[1] = noArvDir;
 }
 
 ArvB *ArvB_insere_rec(ArvB *arv, Indice *chave, int *idMeio)
@@ -125,9 +147,9 @@ ArvB *ArvB_insere_rec(ArvB *arv, Indice *chave, int *idMeio)
         if (noFilho != OK)
         {
 
-            desloca_chaves(arv,pos);
+            desloca_chaves(arv, pos);
 
-            memmove(&arv->filhos[pos + 2], &arv->filhos[pos + 1], sizeof(*(arv->chaves)) * (arv->n_chaves - pos));
+            desloca_filhos(arv, pos);
 
             arv->chaves[pos].id = idMeioAux;
             arv->chaves[pos].pos_seek = 1;
@@ -142,16 +164,15 @@ ArvB *ArvB_insere_rec(ArvB *arv, Indice *chave, int *idMeio)
 
         *idMeio = arv->chaves[filhoNchaves].id;
 
-        noFilho = (ArvB*) malloc(sizeof(ArvB));
+        noFilho = (ArvB *)malloc(sizeof(ArvB));
 
         noFilho->n_chaves = arv->n_chaves - filhoNchaves - 1;
         noFilho->folha = arv->folha;
 
-        memmove(noFilho->chaves, &arv->chaves[filhoNchaves + 1], sizeof(*(arv->chaves)) * noFilho->n_chaves);
+        coloca_chaves_no_filho(arv, noFilho, filhoNchaves + 1);
+
         if (!arv->folha)
-        {
-            memmove(noFilho->filhos, &arv->filhos[filhoNchaves + 1], sizeof(*(arv->filhos)) * (noFilho->n_chaves + 1));
-        }
+            coloca_filhos_no_filho(arv, noFilho, filhoNchaves + 1);
 
         arv->n_chaves = filhoNchaves;
 
@@ -165,26 +186,14 @@ ArvB *ArvB_insere_rec(ArvB *arv, Indice *chave, int *idMeio)
 
 void ArvB_insere(ArvB *arv, Indice *chave)
 {
-    ArvB *noArvEsq;
-    ArvB *noArvDir;
+    ArvB *noArvEsq = NULL;
+    ArvB *noArvDir = NULL;
     int idMeio;
 
     noArvDir = ArvB_insere_rec(arv, chave, &idMeio);
 
     if (noArvDir != OK)
-    {
-
-        noArvEsq = (ArvB*) malloc(sizeof(ArvB));
-        assert(noArvEsq);
-
-        memmove(noArvEsq, arv, sizeof(*arv));
-
-        arv->n_chaves = 1;
-        arv->folha = 0;
-        arv->chaves[0].id = idMeio;
-        arv->filhos[0] = noArvEsq;
-        arv->filhos[1] = noArvDir;
-    }
+        nova_raiz(arv, noArvEsq, noArvDir, idMeio);
 }
 
 void ArvB_limpa(ArvB *arv)
