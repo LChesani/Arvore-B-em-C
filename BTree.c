@@ -13,14 +13,6 @@ struct indice
     int id;
 };
 
-struct cachorro
-{
-    char nome[10];
-    char raca[10];
-    int idade;
-    int id;
-};
-
 struct arvb
 {
     Indice chaves[M - 1];
@@ -35,6 +27,10 @@ Indice *indice_cria(int id, int pos_seek)
     idx->id = id;
     idx->pos_seek = pos_seek;
     return idx;
+}
+
+int getPos(Indice *idx){
+    return idx->pos_seek;
 }
 
 ArvB *ArvB_cria(void)
