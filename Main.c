@@ -8,14 +8,13 @@ int main(void){
 
 
     FILE *arq;
-    ArvB *arv = ArvB_cria();
     int op;
     if (access("canil.dat", F_OK) == 0)
         arq = fopen("canil.dat", "r+"); // arquivo existe
     else
         arq = fopen("canil.dat", "w+"); // arquivo nao existia
-
-
+    ArvB *arv = importa_arvore(arq);
+    
     do{
         op = le_op();
         selecionar(op, arq, arv);
