@@ -36,6 +36,17 @@ void mostra_todos(FILE *arq){
     }
 }
 
+ArvB *importa_arvore(FILE *arq){
+    ArvB *arv = ArvB_cria();
+    Cachorro c;
+    rewind(arq);
+    while (fread(&c, sizeof(c), 1, arq)){
+        Indice *idx = indice_cria(c.id, ftell(arq));
+        ArvB_insere(arv, idx);
+    }
+    return arv;
+}
+
 void selecionar(int op, FILE *arq, ArvB *arv){
     int id;
     switch (op){
@@ -49,7 +60,7 @@ void selecionar(int op, FILE *arq, ArvB *arv){
             Indice *idx = indice_cria(id, 0);
             Indice *busca = Arv_busca(arv, idx);
             if(busca != NULL){
-                printf("\nAluno encontrado");
+                printf("\nCachorro encontrado");
                 //busca o cachorro no arquivo
             }
             else{
