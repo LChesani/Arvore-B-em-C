@@ -44,6 +44,7 @@ ArvB *ArvB_cria(void)
     return arv;
 }
 
+
 Indice *Arv_busca(ArvB *arv, Indice *idx)
 {
     int i = 0;
@@ -73,39 +74,19 @@ void ArvB_printa(ArvB *arv)
         printf("%d ", arv->chaves[i].id);
     }
     printf("\n");
-    for (int i = 0; i < M; i++)
+    for (int i = 0; i < arv->n_chaves+1; i++)
     {
         ArvB_printa(arv->filhos[i]);
     }
 }
-int busca_chave(int n, Indice *a, int id)
+int busca_pos_chave(ArvB *arv, int id)
 {
-    int lo;
-    int hi;
-    int mid;
-
-    /* invariant: a[lo] < chave <= a[hi] */
-    lo = -1;
-    hi = n;
-
-    while (lo + 1 < hi)
-    {
-        mid = (lo + hi) / 2;
-        if (a[mid].id == id)
-        {
-            return mid;
-        }
-        else if (a[mid].id < id)
-        {
-            lo = mid;
-        }
-        else
-        {
-            hi = mid;
+    for(int i = 0; i < arv->n_chaves; i++){
+        if(arv->chaves[i].id > id){
+           return i;
         }
     }
-
-    return hi;
+    return arv->n_chaves;
 }
 
 
@@ -116,7 +97,7 @@ ArvB *ArvB_insere_rec(ArvB* b, Indice *chave, int *median)
     int mid;
     ArvB *b2;
 
-    pos = busca_chave(b->n_chaves, b->chaves, chave->id);
+    pos = busca_pos_chave(b, chave->id);
 
     if (pos < b->n_chaves && b->chaves[pos].id == chave->id)
     {
@@ -138,7 +119,7 @@ ArvB *ArvB_insere_rec(ArvB* b, Indice *chave, int *median)
         {
 
             memmove(&b->chaves[pos + 1], &b->chaves[pos], sizeof(*(b->chaves)) * (b->n_chaves - pos));
-
+        
             memmove(&b->filhos[pos + 2], &b->filhos[pos + 1], sizeof(*(b->chaves)) * (b->n_chaves - pos));
             
             
